@@ -4,283 +4,697 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#071b16">
-  <title>Ask OLake — Documentation Assistant</title>
+  <meta name="theme-color" content="#101411">
+  <title>Ask OLake — Documentation AI</title>
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #071b16;
-      --panel: #0d2620;
-      --border: #20443a;
-      --green: #43d9a3;
-      --text: #eaf7f1;
-      --muted: #9bb8ac;
+      --bg: #101411;
+      --panel: #171d19;
+      --panel-light: #1d2620;
+      --border: #2a352d;
+      --text: #edf4ee;
+      --muted: #98a69b;
+      --green: #8ce6a2;
+      --green-dark: #214b30;
+      --user: #233a2a;
+      --danger: #ff9e9e;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(ellipse at top, #12392b 0%, var(--bg) 55%);
+      background: var(--bg);
       color: var(--text);
-      font: 16px/1.6 system-ui, -apple-system, Segoe UI, sans-serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
     }
 
-    .layout {
-      max-width: 900px;
-      margin: auto;
-      padding: 28px 18px;
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
       min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #131914;
+      border-right: 1px solid var(--border);
+      padding: 22px 16px;
       display: flex;
       flex-direction: column;
+      gap: 25px;
     }
 
-    header {
+    .brand {
       display: flex;
       align-items: center;
-      gap: 13px;
-      padding-bottom: 25px;
-      border-bottom: 1px solid var(--border);
+      gap: 11px;
+      padding: 2px 7px;
     }
 
-    .logo {
-      width: 48px;
-      height: 48px;
+    .brand-mark {
+      width: 39px;
+      height: 39px;
       display: grid;
       place-items: center;
-      border-radius: 15px;
-      background: #173e30;
-      color: var(--green);
-      font-size: 25px;
-      font-weight: 800;
+      border-radius: 13px;
+      color: #102416;
+      background: var(--green);
+      font-weight: 900;
+      font-size: 21px;
     }
 
-    h1 { margin: 0; font-size: 22px; }
-    header p, .subtitle { margin: 2px 0 0; color: var(--muted); }
-    .subtitle { margin-top: 24px; }
+    .brand-name { font-size: 17px; font-weight: 750; letter-spacing: -.4px; }
+    .brand-sub { color: var(--muted); font-size: 11px; margin-top: 3px; }
 
-    .examples {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
-      margin: 17px 0;
-    }
-
-    .example {
-      background: var(--panel);
-      border: 1px solid var(--border);
+    .new-chat {
+      width: 100%;
+      padding: 12px;
+      border-radius: 11px;
+      border: 1px solid #3d5d44;
       color: var(--text);
-      border-radius: 20px;
-      padding: 9px 13px;
-      cursor: pointer;
+      background: #1b2a1f;
+      text-align: left;
+      transition: background .2s;
     }
 
-    .example:hover { border-color: var(--green); }
+    .new-chat:hover { background: #253b2b; }
 
-    #chat {
-      flex: 1;
-      min-height: 250px;
-      padding: 8px 0 20px;
-    }
-
-    .message {
-      margin: 15px 0;
-      padding: 15px 17px;
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .assistant { background: var(--panel); }
-    .user {
-      margin-left: 12%;
-      background: #12372b;
-      border-color: #285b46;
-    }
-
-    .label {
-      color: var(--green);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .08em;
+    .side-label {
+      color: #7e8d82;
       text-transform: uppercase;
-      margin-bottom: 5px;
+      letter-spacing: 1.4px;
+      font-size: 10px;
+      font-weight: 750;
+      margin: 0 8px 10px;
     }
 
-    .sources { margin-top: 12px; font-size: 13px; }
-    .sources a { color: var(--green); margin-right: 12px; }
+    .side-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      padding: 0 8px;
+    }
 
-    form {
+    .sidebar-bottom { margin-top: auto; }
+
+    .status {
       display: flex;
-      gap: 10px;
+      align-items: center;
+      gap: 8px;
       padding: 12px;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      position: sticky;
-      bottom: 10px;
+      border-radius: 11px;
+      font-size: 12px;
+      color: var(--muted);
     }
 
-    input {
-      flex: 1;
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px #8ce6a244;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
       min-width: 0;
+      min-height: 100vh;
+    }
+
+    header {
+      height: 70px;
+      padding: 0 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .page-title { font-size: 14px; font-weight: 650; }
+    .page-subtitle { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .model-badge {
+      color: var(--green);
+      border: 1px solid #35553c;
+      background: #19281d;
+      border-radius: 30px;
+      padding: 7px 11px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    #chat {
+      width: 100%;
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 38px 26px 24px;
+      flex: 1;
+    }
+
+    .welcome { padding: 7vh 0 22px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      background: #19271d;
+      border: 1px solid #2e4935;
+      border-radius: 30px;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    h1 {
+      font-size: clamp(34px, 5vw, 53px);
+      letter-spacing: -2px;
+      line-height: 1.12;
+      margin: 22px 0 15px;
+    }
+
+    h1 span { color: var(--green); }
+
+    .intro {
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+      max-width: 550px;
+    }
+
+    .section-heading {
+      margin: 30px 0 13px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .suggestions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .suggestion {
+      padding: 17px;
+      text-align: left;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      transition: border-color .2s, transform .2s, background .2s;
+    }
+
+    .suggestion:hover {
+      border-color: #547b5c;
+      background: #1b251e;
+      transform: translateY(-2px);
+    }
+
+    .suggestion-icon { color: var(--green); font-size: 19px; }
+    .suggestion-title { font-size: 13px; font-weight: 650; margin: 12px 0 6px; }
+    .suggestion-desc { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      margin: 22px 0;
+      align-items: flex-start;
+    }
+
+    .avatar {
+      flex: 0 0 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--green-dark);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .message.user { justify-content: flex-end; }
+    .message.user .avatar { order: 2; background: #29342c; color: #d5e0d7; }
+    .message-body { min-width: 0; max-width: 85%; }
+    .message-name { font-size: 11px; color: var(--muted); margin: 2px 0 8px; }
+    .message.user .message-name { text-align: right; }
+
+    .bubble {
+      font-size: 13px;
+      line-height: 1.85;
+      overflow-wrap: anywhere;
+    }
+
+    .message.user .bubble {
+      background: var(--user);
+      padding: 12px 15px;
+      border: 1px solid #36513c;
+      border-radius: 14px 4px 14px 14px;
+    }
+
+    .answer-content {
+      color: #dce6de;
+      white-space: pre-wrap;
+    }
+
+    .answer-content a { color: var(--green); }
+    .answer-content code {
+      color: #b4f4c2;
+      background: #202b23;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .message-actions { margin-top: 10px; }
+    .small-button {
+      border: 1px solid var(--border);
       background: transparent;
+      color: var(--muted);
+      border-radius: 7px;
+      padding: 6px 9px;
+      font-size: 10px;
+    }
+    .small-button:hover { color: var(--green); border-color: #47634d; }
+
+    .sources {
+      margin-top: 13px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .sources-title { color: var(--muted); font-size: 10px; margin-bottom: 8px; }
+    .source-link {
+      display: inline-block;
+      margin: 0 7px 7px 0;
+      padding: 6px 9px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--green);
+      text-decoration: none;
+      font-size: 10px;
+    }
+    .source-link:hover { background: var(--panel-light); }
+
+    .typing { color: var(--muted); font-size: 12px; padding: 10px 0; }
+    .error { color: var(--danger); }
+
+    .composer-wrap {
+      position: sticky;
+      bottom: 0;
+      padding: 12px 24px 18px;
+      background: linear-gradient(transparent, var(--bg) 20%);
+    }
+
+    .composer {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #19201b;
+      border: 1px solid #344438;
+      border-radius: 16px;
+      padding: 12px 13px 9px 17px;
+      box-shadow: 0 12px 40px #00000022;
+    }
+
+    .composer:focus-within { border-color: #62886a; }
+
+    textarea {
+      display: block;
+      width: 100%;
+      resize: none;
+      min-height: 29px;
+      max-height: 140px;
       border: 0;
       outline: 0;
       color: var(--text);
-      font: inherit;
+      background: transparent;
+      font-size: 13px;
+      line-height: 1.7;
     }
 
-    button[type="submit"] {
+    textarea::placeholder { color: #758379; }
+
+    .composer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .hint { font-size: 10px; color: #819086; }
+
+    .send {
+      min-width: 74px;
       border: 0;
-      border-radius: 12px;
-      padding: 11px 18px;
+      border-radius: 9px;
+      padding: 9px 14px;
       background: var(--green);
-      color: #062018;
-      font-weight: 800;
-      cursor: pointer;
+      color: #102416;
+      font-size: 12px;
+      font-weight: 750;
     }
 
-    button:disabled { opacity: .5; cursor: wait; }
-    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 18px; }
+    .send:hover { background: #a7f0b7; }
+    .send:disabled { opacity: .5; cursor: wait; }
 
-    @media (max-width: 520px) {
-      .layout { padding: 18px 12px; }
-      .user { margin-left: 5%; }
-      button[type="submit"] { padding: 10px 13px; }
+    .disclaimer {
+      text-align: center;
+      max-width: 800px;
+      margin: 10px auto 0;
+      font-size: 10px;
+      color: #738076;
+    }
+
+    .mobile-menu { display: none; }
+
+    @media (max-width: 760px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      header { height: 62px; padding: 0 17px; }
+      .mobile-menu { display: inline-block; }
+      #chat { padding: 25px 17px; }
+      .welcome { padding-top: 4vh; }
+      h1 { letter-spacing: -1.3px; }
+      .suggestions { grid-template-columns: 1fr; }
+      .suggestion { padding: 14px; }
+      .composer-wrap { padding: 8px 12px 12px; }
+      .hint { max-width: 210px; line-height: 1.5; }
+      .message-body { max-width: 88%; }
     }
   </style>
 </head>
 <body>
-  <main class="layout">
-    <header>
-      <div class="logo">O</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">O</div>
+        <div>
+          <div class="brand-name">Ask OLake</div>
+          <div class="brand-sub">Documentation assistant</div>
+        </div>
+      </div>
+
+      <button class="new-chat" id="newChat">＋ &nbsp; New conversation</button>
+
       <div>
-        <h1>Ask OLake</h1>
-        <p>Your OLake documentation assistant</p>
+        <div class="side-label">About this assistant</div>
+        <div class="side-note">
+          Explore OLake documentation, understand concepts, and get help with setup and troubleshooting.
+        </div>
       </div>
-    </header>
 
-    <p class="subtitle">
-      Ask questions about OLake. Answers are grounded in your indexed
-      documentation, with source links when available.
-    </p>
-
-    <div class="examples">
-      <button class="example" type="button">What is OLake?</button>
-      <button class="example" type="button">How do I configure a pipeline?</button>
-      <button class="example" type="button">How does CDC work?</button>
-    </div>
-
-    <section id="chat" aria-live="polite">
-      <div class="message assistant">
-        <div class="label">Ask OLake</div>
-        Welcome! Ask me a question about OLake to get started.
+      <div>
+        <div class="side-label">Quick tip</div>
+        <div class="side-note">
+          Ask specific questions for more useful answers. Include an error message or configuration detail when relevant.
+        </div>
       </div>
-    </section>
 
-    <form id="question-form">
-      <input id="question" name="question" maxlength="2000"
-        placeholder="Ask a question about OLake..." autocomplete="off"
-        aria-label="Your question" required>
-      <button type="submit" id="send">Ask ↗</button>
-    </form>
+      <div class="sidebar-bottom">
+        <div class="status">
+          <span class="status-dot"></span>
+          <span>Documentation assistant</span>
+        </div>
+      </div>
+    </aside>
 
-    <footer>Ask OLake · Documentation-powered assistant</footer>
-  </main>
+    <main>
+      <header>
+        <div>
+          <div class="page-title"><span class="mobile-menu">◈ &nbsp;</span>Ask OLake</div>
+          <div class="page-subtitle">Your guide to the OLake ecosystem</div>
+        </div>
+        <div class="model-badge">✦ &nbsp; AI assistant</div>
+      </header>
+
+      <section id="chat" aria-live="polite">
+        <div class="welcome" id="welcome">
+          <div class="eyebrow">✳ &nbsp; YOUR OLake KNOWLEDGE ASSISTANT</div>
+          <h1>Understand your data.<br><span>Unlock OLake.</span></h1>
+          <p class="intro">
+            Ask questions about OLake documentation, setup, integrations,
+            and troubleshooting. Get clear answers and follow the sources
+            to explore further.
+          </p>
+
+          <div class="section-heading">Start with a question</div>
+          <div class="suggestions">
+            <button class="suggestion" data-question="What is OLake and how does it work?">
+              <div class="suggestion-icon">◈</div>
+              <div class="suggestion-title">Explore OLake</div>
+              <div class="suggestion-desc">Understand what OLake does and how it works.</div>
+            </button>
+            <button class="suggestion" data-question="How do I get started with OLake?">
+              <div class="suggestion-icon">↗</div>
+              <div class="suggestion-title">Getting started</div>
+              <div class="suggestion-desc">Learn the setup process and first steps.</div>
+            </button>
+            <button class="suggestion" data-question="What sources and destinations does OLake support?">
+              <div class="suggestion-icon">⇄</div>
+              <div class="suggestion-title">Integrations</div>
+              <div class="suggestion-desc">Explore supported sources and destinations.</div>
+            </button>
+            <button class="suggestion" data-question="How can I troubleshoot an OLake pipeline failure?">
+              <div class="suggestion-icon">⌘</div>
+              <div class="suggestion-title">Troubleshooting</div>
+              <div class="suggestion-desc">Find useful debugging and recovery guidance.</div>
+            </button>
+          </div>
+        </div>
+        <div id="messages"></div>
+      </section>
+
+      <div class="composer-wrap">
+        <form class="composer" id="chatForm">
+          <textarea id="question" rows="1" maxlength="2000"
+            placeholder="Ask anything about OLake..." aria-label="Your question"></textarea>
+          <div class="composer-bottom">
+            <span class="hint">Enter to send · Shift + Enter for a new line</span>
+            <button class="send" id="sendButton" type="submit">Send ↗</button>
+          </div>
+        </form>
+        <div class="disclaimer">AI-generated answers may be imperfect. Check the linked documentation for details.</div>
+      </div>
+    </main>
+  </div>
 
   <script>
-    const form = document.getElementById("question-form");
+    // Keep "/api" until the Render backend has been deployed.
+    // Then replace it with your actual Render URL + "/api".
+    const API_URL = "/api";
+
+    const form = document.getElementById("chatForm");
     const input = document.getElementById("question");
-    const send = document.getElementById("send");
-    const chat = document.getElementById("chat");
+    const messages = document.getElementById("messages");
+    const welcome = document.getElementById("welcome");
+    const sendButton = document.getElementById("sendButton");
 
-    function addMessage(label, text, type) {
-      const box = document.createElement("div");
-      box.className = `message ${type}`;
+    let busy = false;
 
-      const heading = document.createElement("div");
-      heading.className = "label";
-      heading.textContent = label;
-
-      const body = document.createElement("div");
-      body.textContent = text;
-
-      box.append(heading, body);
-      chat.appendChild(box);
-      box.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      return box;
+    function scrollToBottom() {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
 
-    document.querySelectorAll(".example").forEach(button => {
-      button.addEventListener("click", () => {
-        input.value = button.textContent;
-        input.focus();
-      });
-    });
+    function addMessage(role, content, sources = []) {
+      const row = document.createElement("div");
+      row.className = "message " + (role === "user" ? "user" : "assistant");
 
-    form.addEventListener("submit", async event => {
-      event.preventDefault();
-      const question = input.value.trim();
-      if (!question || send.disabled) return;
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = role === "user" ? "Y" : "O";
 
-      addMessage("You", question, "user");
+      const body = document.createElement("div");
+      body.className = "message-body";
+
+      const name = document.createElement("div");
+      name.className = "message-name";
+      name.textContent = role === "user" ? "You" : "Ask OLake";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      const text = document.createElement("div");
+      text.className = "answer-content";
+      text.textContent = content;
+      bubble.appendChild(text);
+
+      body.appendChild(name);
+      body.appendChild(bubble);
+
+      if (role !== "user" && content) {
+        const actions = document.createElement("div");
+        actions.className = "message-actions";
+        const copy = document.createElement("button");
+        copy.className = "small-button";
+        copy.textContent = "Copy answer";
+        copy.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(content);
+            copy.textContent = "Copied!";
+            setTimeout(() => copy.textContent = "Copy answer", 1400);
+          } catch {
+            copy.textContent = "Unable to copy";
+          }
+        });
+        actions.appendChild(copy);
+        body.appendChild(actions);
+      }
+
+      if (role !== "user" && Array.isArray(sources) && sources.length) {
+        const sourceBox = document.createElement("div");
+        sourceBox.className = "sources";
+        const title = document.createElement("div");
+        title.className = "sources-title";
+        title.textContent = "SOURCES";
+        sourceBox.appendChild(title);
+
+        sources.forEach(source => {
+          const url = typeof source === "string" ? source : source.url;
+          const label = typeof source === "string" ? source : (source.title || source.url);
+          if (!url || !/^https?:\/\//i.test(url)) return;
+          const link = document.createElement("a");
+          link.className = "source-link";
+          link.href = url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = label || "Open documentation";
+          sourceBox.appendChild(link);
+        });
+
+        if (sourceBox.children.length > 1) body.appendChild(sourceBox);
+      }
+
+      row.appendChild(avatar);
+      row.appendChild(body);
+      messages.appendChild(row);
+      scrollToBottom();
+      return { row, text };
+    }
+
+    async function ask(question) {
+      if (busy || !question.trim()) return;
+
+      busy = true;
+      welcome.hidden = true;
+      sendButton.disabled = true;
+      sendButton.textContent = "Wait…";
       input.value = "";
-      send.disabled = true;
-      send.textContent = "Thinking…";
 
-      const loading = addMessage("Ask OLake", "Searching documentation…", "assistant");
+      addMessage("user", question.trim());
+
+      const pending = addMessage("assistant", "Thinking through the documentation…");
+      pending.text.className = "typing";
 
       try {
-        const response = await fetch("/api", {
+        const response = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question })
+          body: JSON.stringify({ question: question.trim() })
         });
 
         const data = await response.json();
+
         if (!response.ok) {
-          throw new Error(data.error || "The request failed.");
+          throw new Error(data.error || "The server returned an error.");
         }
 
-        loading.lastChild.textContent = data.answer || "No answer was returned.";
+        const answer = data.answer || data.response || "No answer was returned.";
+        pending.text.className = "answer-content";
+        pending.text.textContent = answer;
 
         if (Array.isArray(data.sources) && data.sources.length) {
-          const sources = document.createElement("div");
-          sources.className = "sources";
-          const heading = document.createElement("strong");
-          heading.textContent = "Sources: ";
-          sources.appendChild(heading);
+          const sourceBox = document.createElement("div");
+          sourceBox.className = "sources";
+          const title = document.createElement("div");
+          title.className = "sources-title";
+          title.textContent = "SOURCES";
+          sourceBox.appendChild(title);
 
           data.sources.forEach(source => {
-            try {
-              const url = new URL(source.url);
-              if (url.protocol !== "https:" && url.protocol !== "http:") return;
-
-              const link = document.createElement("a");
-              link.href = url.href;
-              link.target = "_blank";
-              link.rel = "noopener noreferrer";
-              link.textContent = source.title || "Documentation";
-              sources.appendChild(link);
-            } catch (_) {
-              // Skip missing or invalid source URLs.
-            }
+            const url = typeof source === "string" ? source : source.url;
+            const label = typeof source === "string" ? source : (source.title || source.url);
+            if (!url || !/^https?:\/\//i.test(url)) return;
+            const link = document.createElement("a");
+            link.className = "source-link";
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = label || "Open documentation";
+            sourceBox.appendChild(link);
           });
 
-          loading.appendChild(sources);
+          if (sourceBox.children.length > 1) pending.text.parentElement.appendChild(sourceBox);
         }
+
+        const actions = document.createElement("div");
+        actions.className = "message-actions";
+        const copy = document.createElement("button");
+        copy.className = "small-button";
+        copy.textContent = "Copy answer";
+        copy.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(answer);
+            copy.textContent = "Copied!";
+            setTimeout(() => copy.textContent = "Copy answer", 1400);
+          } catch {
+            copy.textContent = "Unable to copy";
+          }
+        };
+        pending.text.parentElement.appendChild(actions);
+        actions.appendChild(copy);
+
       } catch (error) {
-        loading.lastChild.textContent =
-          "Sorry, I couldn't get an answer. Please try again. " + error.message;
+        pending.text.className = "answer-content error";
+        pending.text.textContent =
+          "I couldn't get an answer. " + error.message +
+          "\n\nPlease check your backend connection and try again.";
       } finally {
-        send.disabled = false;
-        send.textContent = "Ask ↗";
+        busy = false;
+        sendButton.disabled = false;
+        sendButton.textContent = "Send ↗";
         input.focus();
+        scrollToBottom();
       }
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      ask(input.value);
+    });
+
+    input.addEventListener("keydown", event => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    });
+
+    document.querySelectorAll("[data-question]").forEach(button => {
+      button.addEventListener("click", () => ask(button.dataset.question));
+    });
+
+    document.getElementById("newChat").addEventListener("click", () => {
+      messages.replaceChildren();
+      welcome.hidden = false;
+      input.value = "";
+      input.focus();
     });
   </script>
 </body>

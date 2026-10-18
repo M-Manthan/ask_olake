@@ -1,0 +1,4 @@
+
+Flask
+gunicorn
+openai>=1.32.0
