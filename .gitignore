@@ -1,0 +1,23 @@
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.venv/
+venv/
+__pycache__/
+.streamlit/*
+!.streamlit/
+!.streamlit/config.toml
+
+# Secrets
+.env
+env
+.streamlit/secrets.toml
+
+# Local Python environment
+venv/
+__pycache__/
+*.py[cod]
+
+# Local Streamlit configuration
+.streamlit/

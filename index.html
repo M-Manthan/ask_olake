@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071b16">
+  <title>Ask OLake — Documentation Assistant</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071b16;
+      --panel: #0d2620;
+      --border: #20443a;
+      --green: #43d9a3;
+      --text: #eaf7f1;
+      --muted: #9bb8ac;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at top, #12392b 0%, var(--bg) 55%);
+      color: var(--text);
+      font: 16px/1.6 system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+
+    .layout {
+      max-width: 900px;
+      margin: auto;
+      padding: 28px 18px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      background: #173e30;
+      color: var(--green);
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    h1 { margin: 0; font-size: 22px; }
+    header p, .subtitle { margin: 2px 0 0; color: var(--muted); }
+    .subtitle { margin-top: 24px; }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin: 17px 0;
+    }
+
+    .example {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 20px;
+      padding: 9px 13px;
+      cursor: pointer;
+    }
+
+    .example:hover { border-color: var(--green); }
+
+    #chat {
+      flex: 1;
+      min-height: 250px;
+      padding: 8px 0 20px;
+    }
+
+    .message {
+      margin: 15px 0;
+      padding: 15px 17px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .assistant { background: var(--panel); }
+    .user {
+      margin-left: 12%;
+      background: #12372b;
+      border-color: #285b46;
+    }
+
+    .label {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .sources { margin-top: 12px; font-size: 13px; }
+    .sources a { color: var(--green); margin-right: 12px; }
+
+    form {
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      position: sticky;
+      bottom: 10px;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      color: var(--text);
+      font: inherit;
+    }
+
+    button[type="submit"] {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 18px;
+      background: var(--green);
+      color: #062018;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: .5; cursor: wait; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 18px; }
+
+    @media (max-width: 520px) {
+      .layout { padding: 18px 12px; }
+      .user { margin-left: 5%; }
+      button[type="submit"] { padding: 10px 13px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <header>
+      <div class="logo">O</div>
+      <div>
+        <h1>Ask OLake</h1>
+        <p>Your OLake documentation assistant</p>
+      </div>
+    </header>
+
+    <p class="subtitle">
+      Ask questions about OLake. Answers are grounded in your indexed
+      documentation, with source links when available.
+    </p>
+
+    <div class="examples">
+      <button class="example" type="button">What is OLake?</button>
+      <button class="example" type="button">How do I configure a pipeline?</button>
+      <button class="example" type="button">How does CDC work?</button>
+    </div>
+
+    <section id="chat" aria-live="polite">
+      <div class="message assistant">
+        <div class="label">Ask OLake</div>
+        Welcome! Ask me a question about OLake to get started.
+      </div>
+    </section>
+
+    <form id="question-form">
+      <input id="question" name="question" maxlength="2000"
+        placeholder="Ask a question about OLake..." autocomplete="off"
+        aria-label="Your question" required>
+      <button type="submit" id="send">Ask ↗</button>
+    </form>
+
+    <footer>Ask OLake · Documentation-powered assistant</footer>
+  </main>
+
+  <script>
+    const form = document.getElementById("question-form");
+    const input = document.getElementById("question");
+    const send = document.getElementById("send");
+    const chat = document.getElementById("chat");
+
+    function addMessage(label, text, type) {
+      const box = document.createElement("div");
+      box.className = `message ${type}`;
+
+      const heading = document.createElement("div");
+      heading.className = "label";
+      heading.textContent = label;
+
+      const body = document.createElement("div");
+      body.textContent = text;
+
+      box.append(heading, body);
+      chat.appendChild(box);
+      box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return box;
+    }
+
+    document.querySelectorAll(".example").forEach(button => {
+      button.addEventListener("click", () => {
+        input.value = button.textContent;
+        input.focus();
+      });
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const question = input.value.trim();
+      if (!question || send.disabled) return;
+
+      addMessage("You", question, "user");
+      input.value = "";
+      send.disabled = true;
+      send.textContent = "Thinking…";
+
+      const loading = addMessage("Ask OLake", "Searching documentation…", "assistant");
+
+      try {
+        const response = await fetch("/api", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "The request failed.");
+        }
+
+        loading.lastChild.textContent = data.answer || "No answer was returned.";
+
+        if (Array.isArray(data.sources) && data.sources.length) {
+          const sources = document.createElement("div");
+          sources.className = "sources";
+          const heading = document.createElement("strong");
+          heading.textContent = "Sources: ";
+          sources.appendChild(heading);
+
+          data.sources.forEach(source => {
+            try {
+              const url = new URL(source.url);
+              if (url.protocol !== "https:" && url.protocol !== "http:") return;
+
+              const link = document.createElement("a");
+              link.href = url.href;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              link.textContent = source.title || "Documentation";
+              sources.appendChild(link);
+            } catch (_) {
+              // Skip missing or invalid source URLs.
+            }
+          });
+
+          loading.appendChild(sources);
+        }
+      } catch (error) {
+        loading.lastChild.textContent =
+          "Sorry, I couldn't get an answer. Please try again. " + error.message;
+      } finally {
+        send.disabled = false;
+        send.textContent = "Ask ↗";
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>
