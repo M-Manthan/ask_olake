@@ -89,10 +89,10 @@ def retrieve_documents(question, documents, limit=4):
 
 
 def answer_question(question):
-    api_key = os.environ.get("OPENROUTER_API_KEY")
+    api_key = os.environ.get(AI_API_KEY)
 
     if not api_key:
-        raise RuntimeError("OPENROUTER_API_KEY is not configured.")
+        raise RuntimeError("AI_API_KEY is not configured.")
 
     documents = load_documents()
     results = retrieve_documents(question, documents)
