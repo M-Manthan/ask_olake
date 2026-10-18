@@ -1,13 +1,14 @@
 
+
 import json
+import math
 import os
+import re
+from collections import Counter
+from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
-from http.server import BaseHTTPRequestHandler
-
 from openai import OpenAI
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,49 +20,82 @@ ALLOWED_MODELS = [
     "deepseek/deepseek-v4.1-flash",
 ]
 
+STOP_WORDS = {
+    "a", "an", "the", "is", "are", "was", "were", "be", "been",
+    "to", "of", "in", "on", "for", "and", "or", "with", "how",
+    "what", "why", "when", "where", "which", "who", "can", "could",
+    "would", "should", "do", "does", "did", "i", "we", "you", "it",
+    "this", "that", "my", "your", "me", "about", "please", "tell",
+}
+
+
+def tokenize(text):
+    words = re.findall(r"[a-zA-Z0-9_]+", text.lower())
+    return [word for word in words if word not in STOP_WORDS]
+
 
 def load_documents():
     if not DATA_PATH.exists():
         raise FileNotFoundError("Documentation index is missing.")
 
     documents = json.loads(DATA_PATH.read_text(encoding="utf-8"))
-    documents = [
+
+    if not isinstance(documents, list):
+        raise ValueError("Documentation index must contain a list.")
+
+    return [
         doc for doc in documents
         if isinstance(doc, dict)
         and isinstance(doc.get("text"), str)
         and doc["text"].strip()
     ]
 
-    if not documents:
-        raise ValueError("Documentation index is empty.")
 
-    vectorizer = TfidfVectorizer(
-        stop_words="english",
-        ngram_range=(1, 2),
-        max_features=30000,
-    )
-    matrix = vectorizer.fit_transform(
-        [doc["text"] for doc in documents]
-    )
+def retrieve_documents(question, documents, limit=4):
+    query_words = tokenize(question)
 
-    return documents, vectorizer, matrix
+    if not query_words:
+        return []
+
+    query_counts = Counter(query_words)
+    query_length = math.sqrt(sum(v * v for v in query_counts.values()))
+    scored = []
+
+    for doc in documents:
+        title = str(doc.get("title", ""))
+        text = doc["text"]
+        doc_words = tokenize(title + " " + text)
+        doc_counts = Counter(doc_words)
+
+        overlap = sum(
+            query_counts[word] * doc_counts.get(word, 0)
+            for word in query_counts
+        )
+
+        if overlap == 0:
+            continue
+
+        doc_length = math.sqrt(sum(v * v for v in doc_counts.values()))
+        score = overlap / (query_length * doc_length) if doc_length else 0
+
+        # Give matches in the title extra importance.
+        title_words = set(tokenize(title))
+        score += 0.15 * sum(1 for word in query_counts if word in title_words)
+
+        scored.append((score, doc))
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [doc for score, doc in scored[:limit]]
 
 
 def answer_question(question):
     api_key = os.environ.get("OPENROUTER_API_KEY")
+
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is not configured.")
 
-    documents, vectorizer, matrix = load_documents()
-
-    query_vector = vectorizer.transform([question])
-    scores = cosine_similarity(query_vector, matrix).flatten()
-    ids = scores.argsort()[::-1][:4]
-
-    results = []
-    for i in ids:
-        if scores[i] > 0:
-            results.append(documents[int(i)])
+    documents = load_documents()
+    results = retrieve_documents(question, documents)
 
     if not results:
         return {
@@ -83,11 +117,7 @@ def answer_question(question):
         context_parts.append(
             f"Title: {title}\nURL: {url}\nContent:\n{snippet}"
         )
-
-        sources.append({
-            "title": title,
-            "url": url,
-        })
+        sources.append({"title": title, "url": url})
 
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
@@ -111,8 +141,7 @@ def answer_question(question):
             {
                 "role": "user",
                 "content": (
-                    f"Question: {question}\n\n"
-                    f"Documentation context:\n"
+                    f"Question: {question}\n\nDocumentation context:\n"
                     + "\n\n---\n\n".join(context_parts)
                 ),
             },
@@ -154,6 +183,7 @@ class handler(BaseHTTPRequestHandler):
 
         try:
             length = int(self.headers.get("Content-Length", "0"))
+
             if length <= 0 or length > 20000:
                 self._send_json(400, {"error": "Invalid request size."})
                 return
